@@ -1,0 +1,84 @@
+<div style="background: var(--surface-1); border-radius: 12px; padding: 14px;">
+  <h2 class="sr-only">RunGap 結果画面のモックアップ。6指標の差分サマリーと3D並走ビューアを表示。</h2>
+
+  <div style="background: var(--surface-2); border: 0.5px solid var(--border); border-radius: 12px; overflow: hidden;">
+
+    <div style="padding: 14px 16px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+      <div>
+        <div style="font-size: 16px; font-weight: 500; color: var(--text-primary);">解析結果</div>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">理想モーション：自己ベスト時の走り</div>
+      </div>
+      <div style="font-size: 12px; color: var(--text-muted);">2026-07-27</div>
+    </div>
+
+    <div style="padding: 14px 16px; border-bottom: 0.5px solid var(--border);">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+        <div style="font-size: 13px; font-weight: 500; color: var(--text-primary);">3D並走ビューア</div>
+        <div style="display: flex; gap: 6px;">
+          <span style="font-size: 11px; color: var(--text-secondary); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 2px 8px;">側面</span>
+          <span style="font-size: 11px; color: var(--text-muted); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 2px 8px;">正面</span>
+          <span style="font-size: 11px; color: var(--text-muted); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 2px 8px;">上面</span>
+        </div>
+      </div>
+      <div style="background: var(--surface-1); border-radius: var(--radius); height: 96px; display: flex; align-items: center; justify-content: center; gap: 4px; position: relative;">
+        <i class="ti ti-run" style="font-size: 52px; color: #85B7EB; opacity: 0.7; position: relative; left: 8px;" aria-hidden="true"></i>
+        <i class="ti ti-run" style="font-size: 52px; color: #D85A30; position: relative; right: 8px;" aria-hidden="true"></i>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px;">
+        <div style="display: flex; gap: 14px; color: var(--text-secondary); font-size: 18px;">
+          <i class="ti ti-player-play" aria-label="再生"></i>
+          <i class="ti ti-player-track-prev" aria-label="1フレーム戻る"></i>
+          <i class="ti ti-player-track-next" aria-label="1フレーム送り"></i>
+          <i class="ti ti-run" style="font-size:16px;" aria-label="局面ジャンプ"></i>
+        </div>
+        <div style="display: flex; gap: 12px; font-size: 11px; color: var(--text-secondary);">
+          <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#85B7EB;margin-right:4px;"></span>理想</span>
+          <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#D85A30;margin-right:4px;"></span>あなたの走り</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding: 12px 16px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+        <div style="font-size: 13px; font-weight: 500; color: var(--text-primary);">差分サマリー</div>
+        <div style="font-size: 11px; color: var(--text-muted);">理想 ／ あなた ／ 差</div>
+      </div>
+      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.6;">数値の解釈は本人と指導者に委ねられます。差が大きいことは「悪い」を意味しません。</div>
+
+      <div id="metrics"></div>
+    </div>
+
+  </div>
+
+  <div style="font-size: 11px; color: var(--text-muted); margin-top: 10px; line-height: 1.6; padding: 0 2px;">※サンプル値によるUIモックアップ。差分バーは色（警告色）ではなく長さと濃淡で差の大きさのみを表します。各値に推定信頼度（高・中・低）を併記します。</div>
+
+  <script>
+    const rows = [
+      {name:"膝関節角度（接地時）", ideal:"155°", you:"148°", diff:"−7°", bar:34, conf:"高"},
+      {name:"体幹前傾角（平均）", ideal:"8°", you:"12°", diff:"+4°", bar:30, conf:"高"},
+      {name:"腕振り角度（振り幅）", ideal:"78°", you:"70°", diff:"−8°", bar:40, conf:"中"},
+      {name:"接地時間（左）", ideal:"182ms", you:"195ms", diff:"+13ms", bar:28, conf:"高"},
+      {name:"接地時間（右・奥側）", ideal:"182ms", you:"201ms", diff:"+19ms", bar:42, conf:"低"},
+      {name:"ストライド長", ideal:"168cm", you:"160cm", diff:"−8cm", bar:40, conf:"中"},
+      {name:"ピッチ", ideal:"186spm", you:"180spm", diff:"−6spm", bar:24, conf:"高"}
+    ];
+    const el = document.getElementById("metrics");
+    el.innerHTML = rows.map(function(r){
+      return '<div style="padding:11px 0;border-top:0.5px solid var(--border);">'
+        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">'
+          + '<div style="font-size:13px;color:var(--text-primary);display:flex;align-items:center;gap:5px;">'+r.name
+            + '<i class="ti ti-help-circle" style="font-size:14px;color:var(--text-muted);" aria-label="指標の解説"></i></div>'
+          + '<span style="font-size:11px;color:var(--text-secondary);border:0.5px solid var(--border);border-radius:20px;padding:1px 9px;">信頼度 '+r.conf+'</span>'
+        + '</div>'
+        + '<div style="display:flex;align-items:baseline;gap:10px;font-size:13px;margin-bottom:7px;">'
+          + '<span style="color:var(--text-secondary);">理想 <b style="font-weight:500;color:var(--text-primary);">'+r.ideal+'</b></span>'
+          + '<span style="color:var(--text-secondary);">あなた <b style="font-weight:500;color:var(--text-primary);">'+r.you+'</b></span>'
+          + '<span style="margin-left:auto;color:var(--text-secondary);">差 <b style="font-weight:500;color:var(--text-primary);">'+r.diff+'</b></span>'
+        + '</div>'
+        + '<div style="height:6px;background:var(--surface-1);border-radius:4px;overflow:hidden;">'
+          + '<div style="height:100%;width:'+r.bar+'%;background:var(--text-muted);opacity:0.5;border-radius:4px;"></div>'
+        + '</div>'
+      + '</div>';
+    }).join("");
+  </script>
+</div>
