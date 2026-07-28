@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RunGap プロトタイプ雛形</title>
+<style>
+:root{
+  --s0:#f4f3ee; --s1:#eceae3; --s2:#ffffff;
+  --tp:#28271f; --ts:#5f5e57; --tm:#8d8b82;
+  --bd:rgba(0,0,0,.11); --bds:rgba(0,0,0,.18);
+  --acc:#185fa5; --acc-bg:#e6f1fb;
+  --warn-bg:#faeeda; --warn-tx:#854f0b;
+  --ideal:#378add; --real:#ef9f27;
+  --r:10px;
+  --sans:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP","Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:#e6e4dd;font-family:var(--sans);color:var(--tp);-webkit-font-smoothing:antialiased}
+.wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px 12px}
+.phone{width:390px;max-width:100%;height:min(812px,88vh);background:var(--s0);border-radius:30px;border:1px solid rgba(0,0,0,.12);box-shadow:0 12px 40px rgba(0,0,0,.14);overflow:hidden;position:relative;display:flex;flex-direction:column}
+.notch{height:26px;flex:none;display:flex;align-items:center;justify-content:center}
+.notch::after{content:"";width:110px;height:6px;border-radius:6px;background:rgba(0,0,0,.14)}
+.app{flex:1;overflow-y:auto;padding:6px 14px 26px;-webkit-overflow-scrolling:touch}
+.cap{font-size:12px;color:#6b6a63;text-align:center;max-width:390px;line-height:1.6}
+
+.ic{width:1em;height:1em;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.15em;flex:none}
+.ic.fill{fill:currentColor;stroke:none}
+
+.screen{display:none;animation:fade .18s ease}
+.screen.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.screen{animation:none}}
+
+.crumb{display:flex;align-items:center;gap:6px;color:var(--tm);font-size:12px;margin:2px 2px 8px;background:none;border:0;padding:6px 2px;cursor:pointer;font-family:inherit}
+.crumb:hover{color:var(--ts)}
+.h1{font-size:18px;font-weight:500;margin:0 2px 14px}
+.topline{display:flex;align-items:center;justify-content:space-between;margin:6px 2px 16px}
+.brand{font-size:16px;font-weight:500}
+
+.card{background:var(--s2);border:.5px solid var(--bd);border-radius:12px;padding:13px 15px;margin-bottom:10px}
+.sec{font-size:13px;color:var(--ts);margin:18px 2px 9px}
+.sec.b{font-weight:500;color:var(--tp)}
+
+.btn{width:100%;height:auto;padding:12px 14px;border:.5px solid var(--bds);background:var(--s2);color:var(--tp);border-radius:var(--r);font-size:14px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}
+.btn:hover{background:var(--s1)}
+.btn:active{transform:scale(.99)}
+.btn.pri{background:var(--acc);color:#fff;border-color:transparent}
+.btn.pri:hover{background:#14538f}
+.btn.big{padding:15px;font-size:15px;font-weight:500;border-radius:12px}
+.brow{display:flex;gap:8px}
+.brow .btn{flex:1}
+
+.nrow{background:var(--s2);border:.5px solid var(--bd);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:11px;cursor:pointer;text-align:left;width:100%;font-family:inherit;color:inherit}
+.nrow:hover{background:var(--s1)}
+.rmeta{flex:1;min-width:0}
+.rt{font-size:14px;font-weight:500}
+.rs{font-size:12px;color:var(--ts);margin-top:3px}
+.chevm{color:var(--tm);font-size:18px}
+
+.nav{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.nc{background:var(--s2);border:.5px solid var(--bd);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:9px;cursor:pointer;font-family:inherit;color:inherit;text-align:left}
+.nc:hover{background:var(--s1)}
+.nc .nl{font-size:13px}
+
+.note{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--ts);line-height:1.65}
+.note .ic{color:var(--tm);font-size:16px;margin-top:1px}
+.info{background:var(--s1);border-radius:10px;padding:10px 12px;margin-bottom:12px}
+
+.legend{display:flex;align-items:center;gap:14px;padding:0 2px 10px;font-size:11px;color:var(--ts)}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+.leg{display:flex;align-items:center;gap:5px}
+
+.chead{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.cname{font-size:15px;font-weight:500}
+.q{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border:.5px solid var(--bds);border-radius:50%;font-size:11px;color:var(--tm);margin-left:3px;vertical-align:1px;cursor:pointer}
+.csub{font-size:12px;color:var(--tm);margin:2px 0 10px}
+.triad{display:flex;gap:8px}
+.triad>div{flex:1;min-width:0}
+.tl{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ts);margin-bottom:3px}
+.tv{font-size:18px;font-weight:500}
+.tv small{font-size:11px;color:var(--tm);font-weight:400;margin-left:1px}
+.conf{display:flex;align-items:baseline;gap:5px;flex:none}
+.cl{font-size:11px;color:var(--tm)}
+.cv{font-size:13px;font-weight:500;color:var(--ts)}
+.side{display:flex;align-items:center;justify-content:space-between;margin:6px 0 4px}
+.chip{font-size:12px;color:var(--ts);background:var(--s1);border:.5px solid var(--bd);border-radius:6px;padding:1px 8px}
+
+.field{margin-bottom:12px}
+.label{display:block;font-size:13px;color:var(--ts);margin-bottom:5px}
+.hint{font-size:12px;color:var(--tm);font-weight:400}
+.ir{display:flex;align-items:center;gap:8px}
+input,select{width:100%;height:38px;border:.5px solid var(--bds);border-radius:var(--r);background:var(--s2);padding:0 12px;font-size:14px;font-family:inherit;color:var(--tp)}
+input:focus,select:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-bg)}
+.u{font-size:13px;color:var(--tm);flex:none;width:26px}
+
+.preview{background:var(--s2);border:.5px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:8px}
+.pbox{height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:var(--s1);border-radius:10px;color:var(--tm)}
+.pbox .big{font-size:52px}
+
+.seg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px}
+.opt{border:.5px solid var(--bds);border-radius:var(--r);padding:10px;text-align:center;font-size:13px;color:var(--ts);cursor:pointer}
+.opt.sel{border:2px solid var(--acc);color:var(--acc);padding:9px}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+
+.steps{display:flex;justify-content:space-between;margin:2px 6px 20px}
+.st{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1}
+.sn{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;border:.5px solid var(--bds);color:var(--tm);background:var(--s0)}
+.sn.done{background:var(--acc-bg);color:var(--acc);border-color:transparent}
+.sn.act{background:var(--acc);color:#fff;border-color:transparent}
+.sl{font-size:11px;color:var(--tm)}
+.st.act .sl{color:var(--tp);font-weight:500}
+.st.done .sl{color:var(--ts)}
+
+.warn{display:flex;gap:8px;align-items:flex-start;background:var(--warn-bg);border-radius:10px;padding:10px 12px;color:var(--warn-tx);font-size:12px;line-height:1.6}
+.warn .ic{color:var(--warn-tx);font-size:16px;margin-top:1px}
+
+.presetrow{display:flex;align-items:center;gap:8px;background:var(--s1);border-radius:10px;padding:10px 12px;margin-bottom:18px}
+.presetrow .ic{color:var(--ts);font-size:17px}
+.linkish{font-size:12px;color:var(--acc);cursor:pointer}
+
+.viewport{position:relative;height:210px;background:var(--s2);border:.5px solid var(--bd);border-radius:12px;overflow:hidden;margin-bottom:12px}
+.camrow{position:absolute;top:8px;right:8px;display:flex;gap:5px}
+.cbtn{font-size:12px;color:var(--ts);background:var(--s2);border:.5px solid var(--bd);border-radius:6px;padding:3px 9px;cursor:pointer}
+.cbtn.on{color:var(--acc);border-color:var(--acc)}
+.runners{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.runners .r{position:absolute;font-size:120px}
+.vlegend{position:absolute;bottom:8px;left:10px;display:flex;gap:12px;font-size:11px;color:var(--ts)}
+.play{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+.pbtn{background:none;border:0;color:var(--tp);font-size:24px;cursor:pointer;padding:0}
+.track{flex:1;height:4px;background:var(--s2);border:.5px solid var(--bd);border-radius:4px;position:relative}
+.thumb{position:absolute;left:35%;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:var(--acc)}
+.time{font-size:12px;color:var(--tm)}
+.trans{display:flex;align-items:center;gap:14px;margin-bottom:14px;padding:0 2px;color:var(--ts)}
+.trans .ib{background:none;border:0;color:var(--ts);font-size:20px;cursor:pointer;padding:0}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.chipb{font-size:12px;color:var(--ts);background:var(--s2);border:.5px solid var(--bd);border-radius:16px;padding:5px 12px;cursor:pointer}
+.chipb:hover{background:var(--s1)}
+.inst{background:var(--s1);border-radius:10px;padding:11px 13px}
+
+.selectrow{display:flex;align-items:center;justify-content:space-between;background:var(--s2);border:.5px solid var(--bd);border-radius:var(--r);padding:9px 13px;margin-bottom:12px}
+.progwrap{height:8px;background:var(--s1);border-radius:8px;overflow:hidden;margin:14px 0 8px}
+.progbar{height:100%;width:0;background:var(--acc);border-radius:8px;transition:width .18s linear}
+
+#toast{position:absolute;left:50%;bottom:26px;transform:translateX(-50%) translateY(12px);background:#2b2a24;color:#fff;font-size:13px;padding:9px 16px;border-radius:20px;opacity:0;pointer-events:none;transition:.22s}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-cl" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+<symbol id="i-cr" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+<symbol id="i-cd" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></symbol>
+<symbol id="i-checkc" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"/></symbol>
+<symbol id="i-sb" viewBox="0 0 24 24"><path d="M8 6v12M18 6L9 12l9 6z"/></symbol>
+<symbol id="i-sf" viewBox="0 0 24 24"><path d="M16 6v12M6 6l9 6-9 6z"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/></symbol>
+<symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L18 10l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 10-2.3 6.4"/><path d="M20 4v7h-7"/></symbol>
+<symbol id="i-rotate" viewBox="0 0 24 24"><path d="M4 12a8 8 0 108-8"/><path d="M4 4v5h5"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s7-6.5 7-11a7 7 0 10-14 0c0 4.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.4"/></symbol>
+<symbol id="i-wind" viewBox="0 0 24 24"><path d="M3 8h11a3 3 0 10-3-3M3 12h16a3 3 0 11-3 3M3 16h9a2.5 2.5 0 11-2 4"/></symbol>
+<symbol id="i-cube" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 3v18M4 7.5l8 4.5 8-4.5"/></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 4v16h16"/><path d="M7 15l3-4 3 2 4-6"/></symbol>
+<symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 8h8M18 8h2M4 16h2M12 16h8"/><circle cx="15" cy="8" r="2.2"/><circle cx="9" cy="16" r="2.2"/></symbol>
+<symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M8.5 12.5l1.6 1.6 2.4-3M8.5 17.5h7"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V6M8 10l4-4 4 4"/><path d="M5 18h14"/></symbol>
+<symbol id="i-speed" viewBox="0 0 24 24"><path d="M12 20a8 8 0 100-16 8 8 0 000 16z"/><path d="M12 12l4-3"/></symbol>
+</defs></svg>
+
+<div class="wrap">
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="app">
+
+      <!-- HOME -->
+      <section class="screen active" id="home">
+        <div class="topline">
+          <span class="brand">RunGap</span>
+          <button class="pbtn" data-goto="_settings" style="font-size:20px;color:var(--ts)" aria-label="設定"><svg class="ic"><use href="#i-sliders"/></svg></button>
+        </div>
+        <button class="btn pri big" data-goto="analysis1"><svg class="ic" style="font-size:18px"><use href="#i-plus"/></svg>新規解析をはじめる</button>
+        <div style="text-align:center;font-size:12px;color:var(--tm);margin-top:8px">動画をアップロードして理想と比較します</div>
+
+        <div class="sec">最近の記録</div>
+        <button class="nrow" data-goto="result"><svg class="ic" style="font-size:20px;color:var(--ts)"><use href="#i-file"/></svg><span class="rmeta"><span class="rt">自己ベスト時の走り</span><span class="rs">2026-07-27 ・ 追い風 2.0 km/h ・ 3:30/km</span></span><svg class="ic chevm"><use href="#i-cr"/></svg></button>
+        <button class="nrow" data-goto="result"><svg class="ic" style="font-size:20px;color:var(--ts)"><use href="#i-file"/></svg><span class="rmeta"><span class="rt">○○選手 ラスト400m</span><span class="rs">2026-07-24 ・ 無風 ・ 3:20/km</span></span><svg class="ic chevm"><use href="#i-cr"/></svg></button>
+        <button class="nrow" data-goto="result"><svg class="ic" style="font-size:20px;color:var(--ts)"><use href="#i-file"/></svg><span class="rmeta"><span class="rt">自己ベスト時の走り</span><span class="rs">2026-07-20 ・ 向かい風 1.5 km/h ・ 3:35/km</span></span><svg class="ic chevm"><use href="#i-cr"/></svg></button>
+
+        <div class="sec">メニュー</div>
+        <div class="nav">
+          <button class="nc" data-goto="body"><svg class="ic" style="font-size:20px;color:var(--ts)"><use href="#i-user"/></svg><span class="nl">マイモデル</span></button>
+          <button class="nc" data-goto="ideal"><svg class="ic" style="font-size:20px;color:var(--ts)"><use href="#i-user"/></svg><span class="nl">理想モーション</span></button>
+          <button class="nc" data-goto="history"><svg class="ic" style="font-size:20px;color:var(--ts)"><use href="#i-chart"/></svg><span class="nl">履歴</span></button>
+          <button class="nc" data-goto="_settings"><svg class="ic" style="font-size:20px;color:var(--ts)"><use href="#i-sliders"/></svg><span class="nl">設定</span></button>
+        </div>
+      </section>
+
+      <!-- BODY INPUT (F1) -->
+      <section class="screen" id="body">
+        <button class="crumb" data-goto="home"><svg class="ic" style="font-size:16px"><use href="#i-cl"/></svg>マイモデル</button>
+        <h1 class="h1">体型を入力する</h1>
+        <div class="preview">
+          <div class="pbox"><svg class="ic big" style="color:var(--tm)"><use href="#i-user"/></svg><span style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ts)"><svg class="ic" style="font-size:15px"><use href="#i-rotate"/></svg>360°回転して確認</span></div>
+        </div>
+        <div class="note" style="margin-bottom:18px;padding:0 2px"><svg class="ic"><use href="#i-info"/></svg><div>体組成の数値に基づく近似モデルです。外見を完全に再現するものではありません。</div></div>
+
+        <div class="sec b">必須項目</div>
+        <div class="field"><label class="label">身長</label><div class="ir"><input value="172"><span class="u">cm</span></div></div>
+        <div class="field"><label class="label">体重</label><div class="ir"><input value="58"><span class="u">kg</span></div></div>
+        <div class="field"><label class="label">骨格筋率 <span class="hint">（体組成計の表示値）</span></label><div class="ir"><input value="42.5"><span class="u">%</span></div></div>
+        <div class="field"><label class="label">体脂肪率 <span class="hint">（体組成計の表示値）</span></label><div class="ir"><input value="11.0"><span class="u">%</span></div></div>
+        <div class="field"><label class="label">股下長</label><div class="ir"><input value="80"><span class="u">cm</span></div></div>
+
+        <div class="sec b" style="margin-top:20px">任意項目 <span class="hint">未入力は身長から推定します</span></div>
+        <div class="field"><label class="label">座高</label><div class="ir"><input placeholder="身長から推定"><span class="u">cm</span></div></div>
+        <div class="field"><label class="label">上腕長／前腕長</label><div class="ir"><input placeholder="身長から推定"><span class="u">cm</span></div></div>
+        <div class="field"><label class="label">肩幅</label><div class="ir"><input placeholder="身長から推定"><span class="u">cm</span></div></div>
+        <div class="field" style="margin-bottom:18px"><label class="label">足長</label><div class="ir"><input placeholder="身長から推定"><span class="u">cm</span></div></div>
+
+        <div class="brow">
+          <button class="btn" data-goto="home">あとで入力</button>
+          <button class="btn pri" data-goto="home" data-toast="モデルを保存しました">確定する</button>
+        </div>
+      </section>
+
+      <!-- IDEAL MOTION (F2) -->
+      <section class="screen" id="ideal">
+        <button class="crumb" data-goto="home"><svg class="ic" style="font-size:16px"><use href="#i-cl"/></svg>理想モーション</button>
+        <h1 class="h1">理想モーションを登録する</h1>
+        <label class="label">お手本の動画</label>
+        <div class="card" style="display:flex;align-items:center;gap:11px;border-color:var(--bds)">
+          <svg class="ic" style="font-size:22px;color:var(--acc)"><use href="#i-checkc"/></svg>
+          <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">best_2025_last400.mp4</div><div style="font-size:12px;color:var(--tm)">側方撮影 ・ 8秒 ・ 60fps</div></div>
+          <svg class="ic" style="font-size:17px;color:var(--ts)"><use href="#i-refresh"/></svg>
+        </div>
+        <div class="note" style="margin-bottom:18px;padding:0 2px"><svg class="ic"><use href="#i-info"/></svg><div>真横から撮影された動画を推奨します。プロ選手・チームメイト・調子が良かった日の自分の走りなど。</div></div>
+
+        <label class="label">アバタープレビュー</label>
+        <div class="preview">
+          <div class="pbox"><svg class="ic big" style="color:var(--real)"><use href="#i-user"/></svg><span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ts)"><svg class="ic" style="font-size:15px"><use href="#i-play"/></svg>登録前にプレビュー再生</span></div>
+        </div>
+        <div class="warn" style="margin-bottom:18px"><svg class="ic"><use href="#i-alert"/></svg><div>体格差により一部の動きが再現しにくいため、可動域の範囲で補正しました。補正箇所はプレビューで確認できます。</div></div>
+
+        <div class="field"><label class="label">この理想モーションの名前</label><input value="自己ベスト時の走り"></div>
+        <div class="note" style="margin-bottom:18px;padding:0 2px"><svg class="ic"><use href="#i-lock"/></svg><div>アップロードした動画は本人の私的な解析にのみ使われ、他の利用者に公開されることはありません。他者の映像を使う場合は権利にご配慮ください。</div></div>
+
+        <div class="brow">
+          <button class="btn" data-goto="home">キャンセル</button>
+          <button class="btn pri" data-goto="home" data-toast="理想モーションを登録しました">登録する</button>
+        </div>
+      </section>
+
+      <!-- ANALYSIS STEP 1 -->
+      <section class="screen" id="analysis1">
+        <button class="crumb" data-goto="home"><svg class="ic" style="font-size:16px"><use href="#i-cl"/></svg>ホーム</button>
+        <h1 class="h1">新規解析</h1>
+        <div class="steps">
+          <div class="st act"><span class="sn act">1</span><span class="sl">動画</span></div>
+          <div class="st"><span class="sn">2</span><span class="sl">理想</span></div>
+          <div class="st"><span class="sn">3</span><span class="sl">環境</span></div>
+          <div class="st"><span class="sn">4</span><span class="sl">実行</span></div>
+        </div>
+        <label class="label">走行動画</label>
+        <div class="card" style="display:flex;align-items:center;gap:11px;border-color:var(--bds)">
+          <svg class="ic" style="font-size:22px;color:var(--acc)"><use href="#i-checkc"/></svg>
+          <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">run_0727_track.mp4</div><div style="font-size:12px;color:var(--tm)">側方撮影 ・ 6秒 ・ 60fps</div></div>
+          <svg class="ic" style="font-size:17px;color:var(--ts)"><use href="#i-refresh"/></svg>
+        </div>
+        <div class="info"><div style="font-size:13px;font-weight:500;margin-bottom:6px;display:flex;align-items:center;gap:6px"><svg class="ic" style="font-size:16px;color:var(--ts)"><use href="#i-upload"/></svg>撮影のめやす</div><div class="note" style="color:var(--ts)"><div>高さ 1.0〜1.5m・走路から 10〜15m の真横。60fps 以上・5歩以上が映ると精度が上がります。</div></div></div>
+        <div class="brow" style="margin-top:6px">
+          <button class="btn" data-goto="home">戻る</button>
+          <button class="btn pri" data-goto="analysis2">次へ</button>
+        </div>
+      </section>
+
+      <!-- ANALYSIS STEP 2 -->
+      <section class="screen" id="analysis2">
+        <button class="crumb" data-goto="analysis1"><svg class="ic" style="font-size:16px"><use href="#i-cl"/></svg>戻る</button>
+        <h1 class="h1">新規解析</h1>
+        <div class="steps">
+          <div class="st done"><span class="sn done"><svg class="ic" style="font-size:15px"><use href="#i-check"/></svg></span><span class="sl">動画</span></div>
+          <div class="st act"><span class="sn act">2</span><span class="sl">理想</span></div>
+          <div class="st"><span class="sn">3</span><span class="sl">環境</span></div>
+          <div class="st"><span class="sn">4</span><span class="sl">実行</span></div>
+        </div>
+        <label class="label">比較する理想モーション</label>
+        <div id="ideallist">
+          <div class="opt sel" style="text-align:left;margin-bottom:8px;padding:12px 14px">自己ベスト時の走り</div>
+          <div class="opt" style="text-align:left;margin-bottom:8px;padding:13px 14px">○○選手 ラスト400m</div>
+          <div class="opt" style="text-align:left;margin-bottom:8px;padding:13px 14px">昨シーズンの自分</div>
+        </div>
+        <div class="brow" style="margin-top:8px">
+          <button class="btn" data-goto="analysis1">戻る</button>
+          <button class="btn pri" data-goto="analysis3">次へ</button>
+        </div>
+      </section>
+
+      <!-- ANALYSIS STEP 3 -->
+      <section class="screen" id="analysis3">
+        <button class="crumb" data-goto="analysis2"><svg class="ic" style="font-size:16px"><use href="#i-cl"/></svg>戻る</button>
+        <h1 class="h1">新規解析</h1>
+        <div class="steps">
+          <div class="st done"><span class="sn done"><svg class="ic" style="font-size:15px"><use href="#i-check"/></svg></span><span class="sl">動画</span></div>
+          <div class="st done"><span class="sn done"><svg class="ic" style="font-size:15px"><use href="#i-check"/></svg></span><span class="sl">理想</span></div>
+          <div class="st act"><span class="sn act">3</span><span class="sl">環境</span></div>
+          <div class="st"><span class="sn">4</span><span class="sl">実行</span></div>
+        </div>
+        <div class="presetrow">
+          <svg class="ic"><use href="#i-pin"/></svg>
+          <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">いつものトラック</div><div style="font-size:12px;color:var(--tm)">タータン ・ 傾斜 0%</div></div>
+          <span class="linkish">変更</span>
+        </div>
+        <div class="field"><label class="label">風速 <span class="hint">（＋／−の符号は不要）</span></label><div class="ir"><input value="2.0"><span class="u">km/h</span></div></div>
+        <div class="field"><label class="label">風向 <span class="hint">（ホームストレート基準）</span></label>
+          <div class="grid2" id="winddir">
+            <div class="opt sel">追い風</div><div class="opt">向かい風</div><div class="opt">横風・右</div><div class="opt">横風・左</div>
+          </div>
+        </div>
+        <div class="field"><label class="label">走行ペース</label><div class="ir"><input value="3:30"><span class="u">/km</span></div></div>
+        <div class="selectrow"><span style="font-size:13px;color:var(--ts)">その他（気温 20℃ ・ 傾斜 0% ・ タータン）</span><svg class="ic" style="font-size:17px;color:var(--tm)"><use href="#i-cr"/></svg></div>
+        <div class="note" style="color:var(--ts);margin:0 2px 18px"><svg class="ic"><use href="#i-wind"/></svg><div>トラックを1周する間、同じ風でも直線とコーナーで向きが変わります。ホームストレートの向きを選べば、他の区間の風は自動で計算されます。</div></div>
+        <div class="brow">
+          <button class="btn" data-goto="analysis2">戻る</button>
+          <button class="btn pri" data-goto="analysis4">次へ</button>
+        </div>
+      </section>
+
+      <!-- ANALYSIS STEP 4 (progress) -->
+      <section class="screen" id="analysis4">
+        <button class="crumb" data-goto="analysis3"><svg class="ic" style="font-size:16px"><use href="#i-cl"/></svg>戻る</button>
+        <h1 class="h1">新規解析</h1>
+        <div class="steps">
+          <div class="st done"><span class="sn done"><svg class="ic" style="font-size:15px"><use href="#i-check"/></svg></span><span class="sl">動画</span></div>
+          <div class="st done"><span class="sn done"><svg class="ic" style="font-size:15px"><use href="#i-check"/></svg></span><span class="sl">理想</span></div>
+          <div class="st done"><span class="sn done"><svg class="ic" style="font-size:15px"><use href="#i-check"/></svg></span><span class="sl">環境</span></div>
+          <div class="st act"><span class="sn act">4</span><span class="sl">実行</span></div>
+        </div>
+        <div class="card" style="padding:20px 16px">
+          <div style="font-size:15px;font-weight:500;margin-bottom:4px">解析中</div>
+          <div style="font-size:12px;color:var(--ts)">サーバーで姿勢推定と指標算出を行っています。完了までしばらくお待ちください。</div>
+          <div class="progwrap"><div class="progbar" id="prog"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--tm)"><span>目安 約2〜3分</span><span id="progpct">0%</span></div>
+          <div class="note" style="margin-top:14px"><svg class="ic"><use href="#i-info"/></svg><div>待っている間に過去の記録を確認できます。</div></div>
+        </div>
+        <div id="prog-done" style="display:none">
+          <button class="btn pri big" data-goto="result"><svg class="ic" style="font-size:17px"><use href="#i-check"/></svg>結果を見る</button>
+        </div>
+      </section>
+
+      <!-- RESULT (F5) numbers only -->
+      <section class="screen" id="result">
+        <button class="crumb" data-goto="home"><svg class="ic" style="font-size:16px"><use href="#i-cl"/></svg>結果</button>
+        <h1 class="h1" style="margin-bottom:4px">差分サマリー</h1>
+        <div style="font-size:12px;color:var(--ts);margin:0 2px 12px;line-height:1.6">2026-07-27 ・ 理想「自己ベスト時の走り」<br>追い風 2.0 km/h ・ 3:30/km ・ タータン</div>
+
+        <div class="info" style="display:flex;gap:8px;align-items:flex-start"><svg class="ic" style="color:var(--tm);font-size:16px;margin-top:1px"><use href="#i-info"/></svg><div style="font-size:12px;color:var(--ts);line-height:1.6">登録した理想の走りとの数値の差です。差の大きさは良し悪しを表しません。</div></div>
+
+        <div class="legend">
+          <span class="leg"><span class="dot" style="background:var(--ideal)"></span>理想</span>
+          <span class="leg"><span class="dot" style="background:var(--real)"></span>あなたの走り</span>
+        </div>
+
+        <div class="card">
+          <div class="chead"><span class="cname">膝関節角度<span class="q">?</span></span><span class="conf"><span class="cl">信頼度</span><span class="cv">高</span></span></div>
+          <div class="csub">接地時の局面</div>
+          <div class="triad"><div><span class="tl"><span class="dot" style="background:var(--ideal)"></span>理想</span><span class="tv">155<small>°</small></span></div><div><span class="tl"><span class="dot" style="background:var(--real)"></span>あなたの走り</span><span class="tv">148<small>°</small></span></div><div><span class="tl">差</span><span class="tv">−7<small>°</small></span></div></div>
+        </div>
+        <div class="card">
+          <div class="chead"><span class="cname">体幹前傾角<span class="q">?</span></span><span class="conf"><span class="cl">信頼度</span><span class="cv">高</span></span></div>
+          <div class="csub">1歩行周期の平均</div>
+          <div class="triad"><div><span class="tl"><span class="dot" style="background:var(--ideal)"></span>理想</span><span class="tv">8<small>°</small></span></div><div><span class="tl"><span class="dot" style="background:var(--real)"></span>あなたの走り</span><span class="tv">5<small>°</small></span></div><div><span class="tl">差</span><span class="tv">−3<small>°</small></span></div></div>
+        </div>
+        <div class="card">
+          <div class="chead"><span class="cname">腕振り角度<span class="q">?</span></span><span class="conf"><span class="cl">信頼度</span><span class="cv">中</span></span></div>
+          <div class="csub">前後の振り幅</div>
+          <div class="triad"><div><span class="tl"><span class="dot" style="background:var(--ideal)"></span>理想</span><span class="tv">62<small>°</small></span></div><div><span class="tl"><span class="dot" style="background:var(--real)"></span>あなたの走り</span><span class="tv">58<small>°</small></span></div><div><span class="tl">差</span><span class="tv">−4<small>°</small></span></div></div>
+        </div>
+        <div class="card">
+          <div class="chead"><span class="cname">接地時間<span class="q">?</span></span></div>
+          <div class="csub">左右それぞれ（ms）</div>
+          <div class="side"><span class="chip">右</span><span class="conf"><span class="cl">信頼度</span><span class="cv">高</span></span></div>
+          <div class="triad"><div><span class="tl"><span class="dot" style="background:var(--ideal)"></span>理想</span><span class="tv">195</span></div><div><span class="tl"><span class="dot" style="background:var(--real)"></span>あなたの走り</span><span class="tv">205</span></div><div><span class="tl">差</span><span class="tv">+10</span></div></div>
+          <div class="side" style="margin-top:12px"><span class="chip">左</span><span class="conf"><span class="cl">信頼度</span><span class="cv">低</span></span></div>
+          <div class="triad"><div><span class="tl"><span class="dot" style="background:var(--ideal)"></span>理想</span><span class="tv">195</span></div><div><span class="tl"><span class="dot" style="background:var(--real)"></span>あなたの走り</span><span class="tv">212</span></div><div><span class="tl">差</span><span class="tv">+17</span></div></div>
+          <div style="display:flex;gap:7px;align-items:flex-start;margin-top:11px;padding-top:11px;border-top:.5px solid var(--bd)"><svg class="ic" style="font-size:15px;color:var(--tm);margin-top:1px"><use href="#i-info"/></svg><div style="font-size:11px;color:var(--ts);line-height:1.6">真横からの1台撮影では手前脚が奥脚を遮蔽するため、左は複数歩から統計推定しています。左右差を見るときは信頼度を併せてご確認ください。</div></div>
+        </div>
+        <div class="card">
+          <div class="chead"><span class="cname">ストライド長<span class="q">?</span></span><span class="conf"><span class="cl">信頼度</span><span class="cv">中</span></span></div>
+          <div class="csub">1歩の距離</div>
+          <div class="triad"><div><span class="tl"><span class="dot" style="background:var(--ideal)"></span>理想</span><span class="tv">148<small>cm</small></span></div><div><span class="tl"><span class="dot" style="background:var(--real)"></span>あなたの走り</span><span class="tv">142<small>cm</small></span></div><div><span class="tl">差</span><span class="tv">−6<small>cm</small></span></div></div>
+        </div>
+        <div class="card" style="margin-bottom:12px">
+          <div class="chead"><span class="cname">ピッチ<span class="q">?</span></span><span class="conf"><span class="cl">信頼度</span><span class="cv">高</span></span></div>
+          <div class="csub">1分あたりの歩数</div>
+          <div class="triad"><div><span class="tl"><span class="dot" style="background:var(--ideal)"></span>理想</span><span class="tv">188<small>spm</small></span></div><div><span class="tl"><span class="dot" style="background:var(--real)"></span>あなたの走り</span><span class="tv">182<small>spm</small></span></div><div><span class="tl">差</span><span class="tv">−6<small>spm</small></span></div></div>
+        </div>
+
+        <div class="brow">
+          <button class="btn" data-goto="viewer" style="border-color:var(--acc);color:var(--acc)"><svg class="ic" style="font-size:16px"><use href="#i-cube"/></svg>3D並走ビューア</button>
+          <button class="btn" data-toast="指標別の詳細は準備中です"><svg class="ic" style="font-size:16px"><use href="#i-chart"/></svg>指標別の詳細</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:12px;padding:0 2px;color:var(--tm);font-size:12px"><svg class="ic" style="font-size:15px"><use href="#i-edit"/></svg>メモを追加（例：今日はピッチを意識した）</div>
+      </section>
+
+      <!-- 3D VIEWER (F6) -->
+      <section class="screen" id="viewer">
+        <button class="crumb" data-goto="result"><svg class="ic" style="font-size:16px"><use href="#i-cl"/></svg>結果</button>
+        <h1 class="h1">3D並走ビューア</h1>
+        <div class="seg" id="viewmode">
+          <div class="opt sel">重ね表示</div><div class="opt">並走表示</div>
+        </div>
+        <div class="viewport">
+          <div class="camrow"><span class="cbtn on">側面</span><span class="cbtn">正面</span><span class="cbtn">上面</span></div>
+          <div class="runners">
+            <svg class="ic r" style="color:var(--ideal);opacity:.5;transform:translateX(-6px)"><use href="#i-user"/></svg>
+            <svg class="ic r" style="color:var(--real);transform:translateX(10px)"><use href="#i-user"/></svg>
+          </div>
+          <div class="vlegend"><span class="leg"><span class="dot" style="background:var(--ideal);opacity:.6"></span>理想</span><span class="leg"><span class="dot" style="background:var(--real)"></span>実走</span></div>
+        </div>
+        <div class="play">
+          <button class="pbtn" id="playbtn" aria-label="再生"><svg class="ic"><use href="#i-play"/></svg></button>
+          <div class="track"><span class="thumb"></span></div>
+          <span class="time">0:03 / 0:08</span>
+        </div>
+        <div class="trans">
+          <button class="ib" aria-label="1コマ戻る"><svg class="ic"><use href="#i-sb"/></svg></button>
+          <button class="ib" aria-label="1コマ送る"><svg class="ic"><use href="#i-sf"/></svg></button>
+          <span style="margin-left:auto;font-size:12px;color:var(--ts);display:flex;align-items:center;gap:6px"><svg class="ic" style="font-size:16px"><use href="#i-speed"/></svg>スロー 0.5×</span>
+        </div>
+        <div style="font-size:12px;color:var(--tm);margin:0 2px 8px">見たい場面へ移動</div>
+        <div class="chips"><span class="chipb">接地</span><span class="chipb">立脚中期</span><span class="chipb">離地</span><span class="chipb">遊脚</span></div>
+        <div class="inst"><div style="font-size:11px;color:var(--tm);margin-bottom:6px">表示中の場面の数値（あなたの走り）</div><div style="font-size:12px;color:var(--ts);line-height:1.7">膝関節角度 148° ・ 体幹前傾角 5° ・ 腕振り角度 58° ・ ピッチ 182 spm</div></div>
+      </section>
+
+      <!-- HISTORY (F7) -->
+      <section class="screen" id="history">
+        <button class="crumb" data-goto="home"><svg class="ic" style="font-size:16px"><use href="#i-cl"/></svg>ホーム</button>
+        <h1 class="h1">履歴</h1>
+        <label class="label">推移を見る指標</label>
+        <select id="metric" style="margin-bottom:12px">
+          <option value="ct">接地時間（右）の差（ms）</option>
+          <option value="knee">膝関節角度の差（°）</option>
+          <option value="pitch">ピッチの差（spm）</option>
+        </select>
+        <div class="card" style="padding:14px 12px 10px;margin-bottom:16px">
+          <div style="font-size:11px;color:var(--tm);margin:0 0 6px 4px" id="ylabel">差（ms）</div>
+          <svg viewBox="0 0 330 140" width="100%" role="img" aria-label="選んだ指標の差の推移グラフ">
+            <line x1="40" y1="15" x2="315" y2="15" stroke="var(--bd)"/>
+            <line x1="40" y1="67.5" x2="315" y2="67.5" stroke="var(--bd)"/>
+            <line x1="40" y1="120" x2="315" y2="120" stroke="var(--bds)" stroke-dasharray="3 3"/>
+            <text id="yt0" x="30" y="19" text-anchor="end" fill="var(--tm)" font-size="10">20</text>
+            <text id="yt1" x="30" y="71" text-anchor="end" fill="var(--tm)" font-size="10">10</text>
+            <text x="30" y="124" text-anchor="end" fill="var(--tm)" font-size="10">0</text>
+            <polyline id="pline" points="" fill="none" stroke="#378add" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+            <g id="pdots"></g>
+            <text x="40" y="135" text-anchor="middle" fill="var(--tm)" font-size="10">7/6</text>
+            <text x="150" y="135" text-anchor="middle" fill="var(--tm)" font-size="10">7/16</text>
+            <text x="315" y="135" text-anchor="middle" fill="var(--tm)" font-size="10">7/27</text>
+          </svg>
+        </div>
+        <div class="sec">記録一覧</div>
+        <button class="nrow" data-goto="result" style="flex-direction:column;align-items:stretch;gap:0"><span class="rt">自己ベスト時の走り</span><span class="rs">2026-07-27 ・ 追い風 2.0 km/h ・ 3:30/km</span><span class="rs" style="display:flex;gap:6px;align-items:center;margin-top:6px"><svg class="ic" style="font-size:14px;color:var(--tm)"><use href="#i-edit"/></svg>今日はピッチを意識した</span></button>
+        <button class="nrow" data-goto="result" style="flex-direction:column;align-items:stretch;gap:0"><span class="rt">○○選手 ラスト400m</span><span class="rs">2026-07-24 ・ 無風 ・ 3:20/km</span><span class="rs" style="display:flex;gap:6px;align-items:center;margin-top:6px"><svg class="ic" style="font-size:14px;color:var(--tm)"><use href="#i-edit"/></svg>接地の左右差を見たい</span></button>
+        <button class="nrow" data-goto="result" style="flex-direction:column;align-items:stretch;gap:0;margin-bottom:0"><span class="rt">自己ベスト時の走り</span><span class="rs">2026-07-20 ・ 向かい風 1.5 km/h ・ 3:35/km</span><span class="rs" style="display:flex;gap:6px;align-items:center;margin-top:6px"><svg class="ic" style="font-size:14px;color:var(--tm)"><use href="#i-edit"/></svg>向かい風でペース調整</span></button>
+      </section>
+
+    </div>
+    <div id="toast"></div>
+  </div>
+  <div class="cap">RunGap プロトタイプ雛形 — ボタンや行をクリックすると画面を移動できます（数値はすべてダミー、解析中の進捗は擬似的なものです）。</div>
+</div>
+
+<script>
+(function(){
+  var app=document.querySelector('.app');
+  var screens=[].slice.call(document.querySelectorAll('.screen'));
+  var toastT;
+  function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('show');},1700);}
+  function show(id){
+    if(id==='_settings'){toast('設定は準備中です');return;}
+    screens.forEach(function(s){s.classList.toggle('active',s.id===id);});
+    app.scrollTop=0;
+    if(id==='analysis4')runProgress();
+  }
+  document.addEventListener('click',function(e){
+    var t=e.target.closest('[data-goto],[data-toast]');
+    if(!t)return;
+    if(t.hasAttribute('data-toast')&&!t.hasAttribute('data-goto')){toast(t.getAttribute('data-toast'));return;}
+    if(t.getAttribute('data-toast'))toast(t.getAttribute('data-toast'));
+    if(t.getAttribute('data-goto'))show(t.getAttribute('data-goto'));
+  });
+
+  function single(container){
+    var el=document.getElementById(container);
+    if(!el)return;
+    el.addEventListener('click',function(e){
+      var o=e.target.closest('.opt');if(!o)return;
+      [].forEach.call(el.querySelectorAll('.opt'),function(x){x.classList.remove('sel');});
+      o.classList.add('sel');
+    });
+  }
+  single('ideallist');single('winddir');single('viewmode');
+
+  var cam=document.querySelector('#viewer .camrow');
+  if(cam)cam.addEventListener('click',function(e){var b=e.target.closest('.cbtn');if(!b)return;[].forEach.call(cam.querySelectorAll('.cbtn'),function(x){x.classList.remove('on');});b.classList.add('on');});
+
+  var pb=document.getElementById('playbtn');
+  if(pb)pb.addEventListener('click',function(){var playing=pb.classList.toggle('playing');pb.querySelector('use').setAttribute('href',playing?'#i-pause':'#i-play');});
+
+  function runProgress(){
+    var bar=document.getElementById('prog'),pct=document.getElementById('progpct'),done=document.getElementById('prog-done');
+    bar.style.width='0%';pct.textContent='0%';done.style.display='none';
+    var v=0;clearInterval(window._pt);
+    window._pt=setInterval(function(){
+      v+=Math.random()*13+5;if(v>=100){v=100;clearInterval(window._pt);done.style.display='block';}
+      bar.style.width=v+'%';pct.textContent=Math.round(v)+'%';
+    },190);
+  }
+
+  var data={
+    ct:{vals:[18,16,15,13,11,10],max:20,unit:'差（ms）'},
+    knee:{vals:[12,10,9,8,7,7],max:15,unit:'差（°）'},
+    pitch:{vals:[10,9,8,7,6,6],max:12,unit:'差（spm）'}
+  };
+  function drawChart(key){
+    var d=data[key],xs=[40,95,150,205,260,315],pts=[],dots='';
+    for(var i=0;i<6;i++){
+      var y=120-(d.vals[i]/d.max)*105;if(y<15)y=15;if(y>120)y=120;
+      pts.push(xs[i]+','+y.toFixed(1));
+      dots+='<circle cx="'+xs[i]+'" cy="'+y.toFixed(1)+'" r="3" fill="#378add"></circle>';
+    }
+    document.getElementById('pline').setAttribute('points',pts.join(' '));
+    document.getElementById('pdots').innerHTML=dots;
+    document.getElementById('ylabel').textContent=d.unit;
+    document.getElementById('yt0').textContent=d.max;
+    document.getElementById('yt1').textContent=Math.round(d.max/2);
+  }
+  var ms=document.getElementById('metric');
+  if(ms)ms.addEventListener('change',function(){drawChart(ms.value);});
+  drawChart('ct');
+})();
+</script>
+</body>
+</html>
