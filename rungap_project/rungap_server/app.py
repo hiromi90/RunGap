@@ -1,6 +1,9 @@
 """FastAPI アプリ本体。ローカル起動：uvicorn rungap_server.app:app --reload"""
 from __future__ import annotations
+import os
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 
 from rungap_server.store import DB, DEMO_USER, new_id, lock
 from rungap_server.models import (
@@ -10,7 +13,16 @@ from rungap_server.jobs import enqueue
 from rungap_pipeline.evaluation.compare import compare_to_reference
 
 app = FastAPI(title="RunGap (local dev server)", version="0.1.0-local")
+app.add_middleware(CORSMiddleware, allow_origins=["*"],
+                   allow_methods=["*"], allow_headers=["*"])
 API = "/api/v1"
+_WEB = os.path.join(os.path.dirname(__file__), "web", "index.html")
+
+
+@app.get("/", response_class=HTMLResponse)
+def index():
+    with open(_WEB, encoding="utf-8") as f:
+        return f.read()
 
 
 @app.get("/healthz")

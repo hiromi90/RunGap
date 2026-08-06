@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RunGap（ローカル）</title>
+<style>
+:root{
+  --s0:#f4f3ee;--s1:#eceae3;--s2:#fff;--tp:#28271f;--ts:#5f5e57;--tm:#8d8b82;
+  --bd:rgba(0,0,0,.11);--bds:rgba(0,0,0,.18);--acc:#185fa5;--acc-bg:#e6f1fb;
+  --ideal:#378add;--real:#ef9f27;--r:10px;
+  --sans:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP","Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--s0);color:var(--tp);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+.wrap{max-width:460px;margin:0 auto;padding:20px 16px 48px}
+.brand{font-size:18px;font-weight:500}
+.sub{font-size:12px;color:var(--tm);margin:2px 0 18px}
+.card{background:var(--s2);border:.5px solid var(--bd);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.h2{font-size:15px;font-weight:500;margin:0 0 12px}
+label{display:block;font-size:13px;color:var(--ts);margin:0 0 5px}
+.field{margin-bottom:12px}
+.ir{display:flex;align-items:center;gap:8px}
+input,select{width:100%;height:38px;border:.5px solid var(--bds);border-radius:var(--r);background:var(--s2);padding:0 12px;font-size:14px;font-family:inherit;color:var(--tp)}
+input:focus,select:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-bg)}
+.u{font-size:13px;color:var(--tm);flex:none;width:34px}
+.btn{width:100%;height:auto;padding:13px;border:.5px solid var(--bds);background:var(--acc);color:#fff;border-radius:12px;font-size:15px;font-weight:500;font-family:inherit;cursor:pointer}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.ghost{background:var(--s2);color:var(--tp)}
+.note{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--ts);line-height:1.6}
+.info{background:var(--s1);border-radius:10px;padding:10px 12px;margin-bottom:12px}
+.prog{height:8px;background:var(--s1);border-radius:8px;overflow:hidden;margin:6px 0}
+.bar{height:100%;width:0;background:var(--acc);transition:width .15s linear}
+.legend{display:flex;gap:14px;font-size:11px;color:var(--ts);margin:2px 2px 10px}
+.leg{display:flex;align-items:center;gap:5px}.dot{width:8px;height:8px;border-radius:50%}
+.chead{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.cname{font-size:15px;font-weight:500}
+.conf{font-size:12px;color:var(--tm)}.conf b{color:var(--ts);font-weight:500}
+.triad{display:flex;gap:8px;margin-top:8px}.triad>div{flex:1;min-width:0}
+.tl{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ts);margin-bottom:3px}
+.tv{font-size:18px;font-weight:500}.tv small{font-size:11px;color:var(--tm);margin-left:1px;font-weight:400}
+.muted{font-size:12px;color:var(--tm)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{padding:6px 4px;text-align:right;border-bottom:.5px solid var(--bd)}
+th:first-child,td:first-child{text-align:left}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">RunGap</div>
+  <div class="sub">ローカル開発サーバー（127.0.0.1・数値はダミー）</div>
+
+  <div class="card">
+    <div class="h2">新規解析</div>
+    <div class="field"><label>理想モーション</label><select id="ideal"></select></div>
+    <div class="field"><label>風速（＋／−の符号は不要）</label><div class="ir"><input id="wind" value="2.0"><span class="u">km/h</span></div></div>
+    <div class="field"><label>風向（ホームストレート基準）</label>
+      <select id="dir">
+        <option value="tailwind">追い風</option>
+        <option value="headwind">向かい風</option>
+        <option value="cross_right">横風・右</option>
+        <option value="cross_left">横風・左</option>
+      </select>
+    </div>
+    <div class="field"><label>走行ペース</label><div class="ir"><input id="pace" value="3:30"><span class="u">/km</span></div></div>
+    <button class="btn" id="run">解析を実行</button>
+    <div id="progwrap" class="hidden" style="margin-top:12px">
+      <div class="muted" id="progtext">解析中…</div>
+      <div class="prog"><div class="bar" id="bar"></div></div>
+    </div>
+  </div>
+
+  <div id="results" class="hidden">
+    <div class="info note"><span>登録した理想の走りとの数値の差です。差の大きさは良し悪しを表しません。</span></div>
+    <div class="legend">
+      <span class="leg"><span class="dot" style="background:var(--ideal)"></span>理想</span>
+      <span class="leg"><span class="dot" style="background:var(--real)"></span>あなたの走り</span>
+    </div>
+    <div id="cards"></div>
+    <button class="btn ghost" id="evalbtn">評価モード（参照との一致度）を見る</button>
+    <div id="evalbox" class="card hidden" style="margin-top:12px">
+      <div class="h2">評価モード（Phase 0）</div>
+      <table><thead><tr><th>指標</th><th>推定</th><th>参照</th><th>差</th><th>判定</th></tr></thead><tbody id="evalrows"></tbody></table>
+      <div class="muted" style="margin-top:8px">mocopi・ウォッチの参照値との一致度（ここではダミーの参照値）。</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = "/api/v1";
+let bodyId = null, analysisId = null;
+const $ = s => document.querySelector(s);
+const LABEL = {knee_angle:"膝関節角度",trunk_lean:"体幹前傾角",arm_swing:"腕振り角度",
+  ground_contact_time:"接地時間",stride_length:"ストライド長",pitch:"ピッチ"};
+const CONF = {high:"高",medium:"中",low:"低"};
+const SIDE = {right:"右",left:"左"};
+const unit = u => u === "deg" ? "°" : u;
+
+async function jget(u){return (await fetch(u)).json();}
+async function jpost(u,b){return (await fetch(u,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)})).json();}
+
+async function init(){
+  let profs = await jget(`${API}/users/me/body-profiles`);
+  if(!profs.length){
+    const p = await jpost(`${API}/users/me/body-profiles`,
+      {height_cm:172,weight_kg:58,skeletal_muscle_pct:42.5,body_fat_pct:11.0,inseam_cm:80});
+    bodyId = p.id;
+  } else bodyId = profs[0].id;
+
+  let ideals = await jget(`${API}/ideal-motions`);
+  if(!ideals.length){
+    await jpost(`${API}/ideal-motions`,{name:"自己ベスト時の走り"});
+    ideals = await jget(`${API}/ideal-motions`);
+  }
+  $("#ideal").innerHTML = ideals.map(i=>`<option value="${i.id}">${i.name}</option>`).join("");
+}
+
+function paceToSec(s){
+  const m = String(s).split(":"); 
+  return m.length===2 ? (+m[0])*60+(+m[1]) : Math.round(+s);
+}
+
+async function run(){
+  $("#run").disabled = true;
+  $("#results").classList.add("hidden");
+  $("#progwrap").classList.remove("hidden");
+  $("#bar").style.width = "0%"; $("#progtext").textContent = "解析中…";
+  const r = await jpost(`${API}/analyses`,{
+    ideal_motion_id: $("#ideal").value, body_profile_id: bodyId,
+    environment:{wind_speed_kmh: parseFloat($("#wind").value)||0,
+      wind_direction: $("#dir").value, pace_sec_per_km: paceToSec($("#pace").value)}});
+  analysisId = r.analysis_id;
+  let job;
+  for(let i=0;i<40;i++){
+    job = await jget(`${API}/jobs/${r.job_id}`);
+    $("#bar").style.width = (job.progress||0) + "%";
+    if(job.status==="done"||job.status==="failed") break;
+    await new Promise(res=>setTimeout(res,180));
+  }
+  if(job.status!=="done"){ $("#progtext").textContent="解析に失敗しました"; $("#run").disabled=false; return; }
+  const res = await jget(`${API}/analyses/${analysisId}`);
+  render(res.metrics);
+  $("#progwrap").classList.add("hidden");
+  $("#results").classList.remove("hidden");
+  $("#evalbox").classList.add("hidden");
+  $("#run").disabled = false;
+}
+
+function render(metrics){
+  $("#cards").innerHTML = metrics.map(m=>{
+    const name = LABEL[m.metric] + (m.side!=="none" ? `（${SIDE[m.side]}）` : "");
+    const occ = (m.metric==="ground_contact_time" && m.side==="left")
+      ? `<div class="note" style="margin-top:10px;padding-top:10px;border-top:.5px solid var(--bd)"><span>真横1台の撮影では奥脚が隠れるため、左は複数歩からの統計推定です。信頼度を併せてご確認ください。</span></div>` : "";
+    return `<div class="card">
+      <div class="chead"><span class="cname">${name}</span><span class="conf">信頼度 <b>${CONF[m.confidence]}</b></span></div>
+      <div class="triad">
+        <div><span class="tl"><span class="dot" style="background:var(--ideal)"></span>理想</span><span class="tv">${m.ideal_value}<small>${unit(m.unit)}</small></span></div>
+        <div><span class="tl"><span class="dot" style="background:var(--real)"></span>あなたの走り</span><span class="tv">${m.actual_value}<small>${unit(m.unit)}</small></span></div>
+        <div><span class="tl">差</span><span class="tv">${m.diff>0?"+":""}${m.diff}<small>${unit(m.unit)}</small></span></div>
+      </div>${occ}
+    </div>`;
+  }).join("");
+}
+
+async function showEval(){
+  const ev = await jpost(`${API}/analyses/${analysisId}/evaluate`,{reference:{}});
+  $("#evalrows").innerHTML = ev.rows.map(r=>{
+    const name = LABEL[r.metric] + (r.side!=="none" ? `（${SIDE[r.side]}）` : "");
+    return `<tr><td>${name}</td><td>${r.pipeline}</td><td>${r.reference}</td><td>${r.diff>0?"+":""}${r.diff}</td><td>${r.judge}</td></tr>`;
+  }).join("");
+  $("#evalbox").classList.remove("hidden");
+}
+
+$("#run").addEventListener("click", run);
+$("#evalbtn").addEventListener("click", showEval);
+init();
+</script>
+</body>
+</html>

@@ -1,28 +1,32 @@
 # RunGap ローカル開発プロジェクト
 
 理想の走りと実際の走りの「差」を数値で見る、ランニングフォーム比較アプリの
-バックエンド実装（ローカル開発版）です。現段階はローカルサーバー前提で、
-姿勢推定は差し替え式パイプラインの Step 1（ダミーモデル）を用います。
+ローカル開発版です。ローカルサーバーが Web 画面と API を配信し、差し替え式
+パイプラインの Step 1（現状ダミーモデル）で解析します。
 
 ## 構成
 ```
-rungap_pipeline/   姿勢推定パイプライン（共通スケルトン＋アダプタ＋共通後段＋評価モード）
-rungap_server/     FastAPI ローカル開発サーバー（体型・理想・解析・進捗・結果・評価）
-requirements.txt   依存関係
+rungap_pipeline/     姿勢推定パイプライン（共通スケルトン＋アダプタ＋共通後段＋評価モード）
+rungap_server/       FastAPI ローカルサーバー（API ＋ web/ の画面配信）
+rungap_server/web/   ブラウザ画面（実APIで解析→進捗→結果→評価）
+requirements.txt     依存関係
 ```
 
 ## クイックスタート
 ```bash
 pip install -r requirements.txt
 
-# パイプライン単体の実演
-python3 -m rungap_pipeline.run
-
-# ローカルサーバー起動 → http://127.0.0.1:8000/docs（Swagger UI）
+# ローカルサーバー起動
 python3 -m rungap_server.run_local
+```
+ブラウザで次を開く：
+- 画面：http://127.0.0.1:8000/  （理想を選び「解析を実行」→ 進捗→結果→評価モード）
+- API ドキュメント：http://127.0.0.1:8000/docs
 
-# サーバーの自己検証（起動不要）
-python3 -m rungap_server.selftest
+その他：
+```bash
+python3 -m rungap_pipeline.run       # パイプライン単体の実演
+python3 -m rungap_server.selftest    # サーバーの自己検証（起動不要）
 ```
 
 ## いまの位置づけ
