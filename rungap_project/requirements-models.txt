@@ -1,0 +1,8 @@
+# 実モデル（単眼3D）用の追加依存。base の requirements.txt とは別に入れる。
+mediapipe
+opencv-python-headless
+
+# さらに、mediapipe(Tasks API) は姿勢モデルファイルが必要（一度だけDL）:
+#   https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task
+# 取得後、pose_landmarker.task という名前で作業ディレクトリに置くか、
+# 環境変数 RUNGAP_POSE_MODEL にそのパスを設定する。
